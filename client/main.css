@@ -1,0 +1,35 @@
+*{
+    margin: 0;
+    padding:0;
+    font-family: "helvetica";
+    font-size: 16px;
+    text-align: center;
+    font-style: normal;
+}
+body{
+    overflow: hidden;
+}
+.success{
+    color: green;
+    font-style: bold;
+}
+
+.error{
+    font-style: italic;
+    color: red;
+}
+
+#view{
+	position: absolute;
+	left:5%;
+	top: 5%;
+	bottom: 5%;
+	right: 5%;
+	width:90%;
+	height:90%;
+	background-color: white;
+	border-style: solid;
+    border-width: 1px;
+    border-color: black;
+    border-radius: 5px;
+}
