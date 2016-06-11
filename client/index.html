@@ -23,6 +23,7 @@ var socket = io();
 var circle = new Two.Ellipse(state.x, state.y, 50);
 var group = new Two.Group();
 var others = new Two.Group();
+var otherGroups = {};
 group.add(circle);
 two.add(group);
 two.add(others);
@@ -54,22 +55,37 @@ socket.on('on_connect', function(msg){
 });
 
 socket.on('server_update', function(msg){
-	if(others!=null){
-		others.remove();
+	temp={};
+	for(var i in otherGroups){
+		if(i in msg){
+			temp[i] = otherGroups[i];
+		}else{
+			two.remove(otherGroups[i]);
+		}
 	}
-	two.remove(others);
-	others = new Two.Group();
-	for(client in msg){
-		var clientState = msg[client];
-		if(client!=id && clientState!=null){
-			var c = new Two.Ellipse(clientState.x, clientState.y, 25);
-			others.add(c);
-			
-		}else if(client==id){
+	otherGroups = temp;
+	for(var i in msg){
+		var clientState = msg[i];
+		if(i!=id && clientState!=null){
+			if(i in otherGroups){
+				//update group translation with clientstate
+				otherGroups[i]['newstate'] = clientState;
+				otherGroups[i].translation.set(clientState.x, clientState.y);
+				otherGroups[i]['oldstate'] = otherGroups[i]['newstate'];
+			}else{
+				//make new entry with id, new group, with circle at origin, then translate
+				otherGroups[i] = new Two.Group();
+				otherGroups[i].add(new Two.Ellipse(0,0,25));
+				otherGroups[i]['oldstate'] = clientState;
+				otherGroups[i]['newstate'] = clientState;
+				otherGroups[i].translation.set(clientState.x, clientState.y);
+				two.add(otherGroups[i]);
+			}
+		}else if(i==id){
 			emit("update_ack", id, state);
 		}
 	}
-	two.add(others);
+
 	two.update();
 });
 
@@ -79,6 +95,25 @@ function emit(channel, clientID, clientData){
 	socket.emit(channel, messagePack);
 }
 
+
+function updateObject(obj, newObj){
+	if(newObj!=null){
+		for(var key in obj){
+			if(key in newObj){
+				obj[key] = newObj[key];
+			}
+		}
+		for(var key in newObj){
+			if(!(key in obj)){
+				obj[key] = newObj[key];
+			}
+		}
+	}
+}
+
+two.bind('update', function(framecount){
+
+});
 	
 
 
