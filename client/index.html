@@ -17,8 +17,11 @@ var type = /(canvas|webgl)/.test(url.type) ? url.type : 'svg';
 var elem = document.getElementById('view');
 var two = new Two({ width: elem.width, height: elem.height }).appendTo(elem);
 
+var numOfSteps = 5;
+
 var id = -1;
 var state = {'x': 0, 'y':0};
+var animateState = {'x': 0, 'y':0};
 var socket = io();
 var circle = new Two.Ellipse(state.x, state.y, 50);
 var group = new Two.Group();
@@ -38,7 +41,7 @@ function onViewClick(event){
 }
 
 function updateSelf(){
-	group.translation.set(state.x, state.y);
+	//group.translation.set(state.x, state.y);
 	two.update();
 }
 
@@ -69,9 +72,10 @@ socket.on('server_update', function(msg){
 		if(i!=id && clientState!=null){
 			if(i in otherGroups){
 				//update group translation with clientstate
+				otherGroups[i]['oldstate'] = shallowCopy(otherGroups[i]['newstate']);
+				
+				//otherGroups[i].translation.set(clientState.x, clientState.y);
 				otherGroups[i]['newstate'] = clientState;
-				otherGroups[i].translation.set(clientState.x, clientState.y);
-				otherGroups[i]['oldstate'] = otherGroups[i]['newstate'];
 			}else{
 				//make new entry with id, new group, with circle at origin, then translate
 				otherGroups[i] = new Two.Group();
@@ -85,7 +89,7 @@ socket.on('server_update', function(msg){
 			emit("update_ack", id, state);
 		}
 	}
-
+	console.log(otherGroups);
 	two.update();
 });
 
@@ -112,9 +116,56 @@ function updateObject(obj, newObj){
 }
 
 two.bind('update', function(framecount){
+	if(!statesEqual(animateState, state) && group!=null){
+		var xStep = (state.x-animateState.x)/numOfSteps;
+		var yStep = (state.y-animateState.y)/numOfSteps;
+		group.translation.set(animateState.x+xStep, animateState.y+yStep);
+		animateState.x = animateState.x+xStep;
+		animateState.y = animateState.y+yStep;
+	}
+
+
+
+	
+	for(var ident in otherGroups){
+		var g = otherGroups[ident];
+		if(g!=null){
+			var targetState = g['newstate'];
+			var currentState = g['oldstate'];
+			if(targetState!=null && currentState!=null){
+				if(!statesEqual(targetState, currentState)){
+					
+					var xStep = (targetState.x-currentState.x)/numOfSteps;
+					var yStep = (targetState.y-currentState.y)/numOfSteps;
+					g.translation.set(currentState.x+xStep, currentState.y+yStep);
+					currentState.x = currentState.x+xStep;
+					currentState.y = currentState.y+yStep;
+					g['oldstate'] = currentState;
+				}
+			}
+		}
+	}
 
 });
-	
+two.play();
+
+
+function statesEqual(a, b){
+	if(a!=null && b !=null){
+		if(a.x===b.x && a.y===b.y){
+			return true;
+		}
+	}
+	return false;
+}
+
+function shallowCopy(s){
+	var copyOBj = {};
+	for(var prop in s){
+		copyOBj[prop] = s[prop];
+	}
+	return copyOBj;
+}
 
 
 </script>
