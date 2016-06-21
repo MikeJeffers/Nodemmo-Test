@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
+    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <script src="/client/two.min.js"></script>
     <script src="/client/url.js"></script>
     <link rel="stylesheet" type="text/css" href="/client/main.css"/>
@@ -16,6 +16,11 @@
 var type = /(canvas|webgl)/.test(url.type) ? url.type : 'svg';
 var elem = document.getElementById('view');
 var two = new Two({ width: elem.width, height: elem.height }).appendTo(elem);
+
+window.onresize=function(){
+	two.width = $("#view").width();
+	two.height = $("#view").height();
+};
 
 var numOfSteps = 5;
 
@@ -34,14 +39,15 @@ two.add(others);
 $("#view").click(onViewClick);
 
 function onViewClick(event){
-	state['x'] = event.clientX;
-	state['y'] = event.clientY;
+	var xOff = $(window).width()*0.05;
+	var yOff = $(window).height()*0.05;
+	state['x'] = event.clientX-xOff;
+	state['y'] = event.clientY-yOff;
 	updateSelf();
 	sendState();
 }
 
 function updateSelf(){
-	//group.translation.set(state.x, state.y);
 	two.update();
 }
 
