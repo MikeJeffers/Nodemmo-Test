@@ -21,8 +21,8 @@ window.onresize=function(){
 	two.width = $("#view").width();
 	two.height = $("#view").height();
 };
-
-var numOfSteps = 5;
+//TODO:bug client needs to give current state AND target state
+var numOfSteps = 500;
 
 var id = -1;
 var state = {'x': 0, 'y':0};
@@ -43,12 +43,7 @@ function onViewClick(event){
 	var yOff = $(window).height()*0.05;
 	state['x'] = event.clientX-xOff;
 	state['y'] = event.clientY-yOff;
-	updateSelf();
 	sendState();
-}
-
-function updateSelf(){
-	two.update();
 }
 
 function sendState(){
@@ -77,10 +72,7 @@ socket.on('server_update', function(msg){
 		var clientState = msg[i];
 		if(i!=id && clientState!=null){
 			if(i in otherGroups){
-				//update group translation with clientstate
 				otherGroups[i]['oldstate'] = shallowCopy(otherGroups[i]['newstate']);
-				
-				//otherGroups[i].translation.set(clientState.x, clientState.y);
 				otherGroups[i]['newstate'] = clientState;
 			}else{
 				//make new entry with id, new group, with circle at origin, then translate
@@ -95,8 +87,6 @@ socket.on('server_update', function(msg){
 			emit("update_ack", id, state);
 		}
 	}
-	console.log(otherGroups);
-	two.update();
 });
 
 
@@ -130,9 +120,6 @@ two.bind('update', function(framecount){
 		animateState.y = animateState.y+yStep;
 	}
 
-
-
-	
 	for(var ident in otherGroups){
 		var g = otherGroups[ident];
 		if(g!=null){
@@ -140,7 +127,6 @@ two.bind('update', function(framecount){
 			var currentState = g['oldstate'];
 			if(targetState!=null && currentState!=null){
 				if(!statesEqual(targetState, currentState)){
-					
 					var xStep = (targetState.x-currentState.x)/numOfSteps;
 					var yStep = (targetState.y-currentState.y)/numOfSteps;
 					g.translation.set(currentState.x+xStep, currentState.y+yStep);
