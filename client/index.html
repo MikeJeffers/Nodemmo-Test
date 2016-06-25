@@ -5,6 +5,8 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <script src="/client/two.min.js"></script>
     <script src="/client/url.js"></script>
+    <script src = "/Vec2D.js"></script>
+    <script src = "/Player.js"></script>
     <link rel="stylesheet" type="text/css" href="/client/main.css"/>
 	<title>Client!</title>
 </head>
@@ -21,14 +23,16 @@ window.onresize=function(){
 	two.width = $("#view").width();
 	two.height = $("#view").height();
 };
+
 //TODO:bug client needs to give current state AND target state
 var numOfSteps = 500;
 
 var id = -1;
-var state = {'x': 0, 'y':0};
-var animateState = {'x': 0, 'y':0};
+var player = new Player(id,new Vec2D(0,0),new Vec2D(0,0));
+
+
 var socket = io();
-var circle = new Two.Ellipse(state.x, state.y, 50);
+var circle = new Two.Ellipse(0, 0, 50);
 var group = new Two.Group();
 var others = new Two.Group();
 var otherGroups = {};
@@ -41,25 +45,27 @@ $("#view").click(onViewClick);
 function onViewClick(event){
 	var xOff = $(window).width()*0.05;
 	var yOff = $(window).height()*0.05;
-	state['x'] = event.clientX-xOff;
-	state['y'] = event.clientY-yOff;
+	player.setTarget(new Vec2D(event.clientX-xOff, event.clientY-yOff));
+
 	sendState();
 }
 
 function sendState(){
-	emit('update_state', id, state);
+	emit('update_state', player);
 }
 
 socket.on('on_connect', function(msg){
 	if(id<0){
 		id = msg;
-		$('#name').append("<p>MY NAME IS: "+id+"</p>");
+		player.setID(id);
+		$('#name').append("<p>MY NAME IS: "+player.getID()+"</p>");
 	}
-	emit('connect_ack', id, state);
+	emit('connect_ack', player);
 });
 
 socket.on('server_update', function(msg){
 	temp={};
+	//clear disconnected clients
 	for(var i in otherGroups){
 		if(i in msg){
 			temp[i] = otherGroups[i];
@@ -67,72 +73,65 @@ socket.on('server_update', function(msg){
 			two.remove(otherGroups[i]);
 		}
 	}
+	
 	otherGroups = temp;
 	for(var i in msg){
-		var clientState = msg[i];
-		if(i!=id && clientState!=null){
-			if(i in otherGroups){
-				otherGroups[i]['oldstate'] = shallowCopy(otherGroups[i]['newstate']);
-				otherGroups[i]['newstate'] = clientState;
-			}else{
+		var otherPlayer = new Player(0, new Vec2D(0,0), new Vec2D(0,0));
+		otherPlayer.fromJSON(msg[i]);
+		if(i!=id && otherPlayer!=null){
+			if(!(i in otherGroups)){
 				//make new entry with id, new group, with circle at origin, then translate
 				otherGroups[i] = new Two.Group();
 				otherGroups[i].add(new Two.Ellipse(0,0,25));
-				otherGroups[i]['oldstate'] = clientState;
-				otherGroups[i]['newstate'] = clientState;
-				otherGroups[i].translation.set(clientState.x, clientState.y);
+				otherGroups[i].player = otherPlayer;
+				var cPos = new Vec2D();
+				cPos.fromJSON(otherPlayer.getPos());
+				otherGroups[i].translation.set(cPos.x, cPos.y);
 				two.add(otherGroups[i]);
+			}else{
+				
+				var oPlayer = otherGroups[i].player;
+				otherGroups[i].translation.set(oPlayer.x, oPlayer.y);
 			}
 		}else if(i==id){
-			emit("update_ack", id, state);
+			emit("update_ack", player);
 		}
 	}
 });
 
 
-function emit(channel, clientID, clientData){
-	var messagePack = {'ID':clientID, "STATE":clientData};
-	socket.emit(channel, messagePack);
+function emit(channel, data){
+	socket.emit(channel, data);
 }
 
 
-function updateObject(obj, newObj){
-	if(newObj!=null){
-		for(var key in obj){
-			if(key in newObj){
-				obj[key] = newObj[key];
-			}
-		}
-		for(var key in newObj){
-			if(!(key in obj)){
-				obj[key] = newObj[key];
-			}
-		}
-	}
-}
 
 two.bind('update', function(framecount){
-	if(!statesEqual(animateState, state) && group!=null){
-		var xStep = (state.x-animateState.x)/numOfSteps;
-		var yStep = (state.y-animateState.y)/numOfSteps;
-		group.translation.set(animateState.x+xStep, animateState.y+yStep);
-		animateState.x = animateState.x+xStep;
-		animateState.y = animateState.y+yStep;
+	var cPos = player.getPos();
+	var target = player.getTarget();
+	if(!cPos.equals(target) && group!=null){
+		var xStep = (target.x-cPos.x)/numOfSteps;
+		var yStep = (target.y-cPos.y)/numOfSteps;
+		cPos = new Vec2D(cPos.x+xStep, cPos.y+yStep);
+		player.setPos(cPos);
+		group.translation.set(cPos.x, cPos.y);
 	}
 
 	for(var ident in otherGroups){
 		var g = otherGroups[ident];
-		if(g!=null){
-			var targetState = g['newstate'];
-			var currentState = g['oldstate'];
-			if(targetState!=null && currentState!=null){
-				if(!statesEqual(targetState, currentState)){
-					var xStep = (targetState.x-currentState.x)/numOfSteps;
-					var yStep = (targetState.y-currentState.y)/numOfSteps;
-					g.translation.set(currentState.x+xStep, currentState.y+yStep);
-					currentState.x = currentState.x+xStep;
-					currentState.y = currentState.y+yStep;
-					g['oldstate'] = currentState;
+		var otherPlayer = new Player(0,new Vec2D(0,0), new Vec2D(0,0));
+		otherPlayer.fromJSON(g.player);
+		if(g!=null && otherPlayer!=null){
+			var targetPos = new Vec2D(otherPlayer.getTarget().x, otherPlayer.getTarget().y);
+			var currentPos = new Vec2D(otherPlayer.getPos().x, otherPlayer.getPos().y);
+			if(targetPos!=null && currentPos!=null){
+				if(!currentPos.equals(targetPos)){
+					var xStep = (targetPos.x-currentPos.x)/numOfSteps;
+					var yStep = (targetPos.y-currentPos.y)/numOfSteps;
+					g.translation.set(currentPos.x+xStep, currentPos.y+yStep);
+					currentPos = new Vec2D(currentPos.x+xStep, currentPos.y+yStep);
+					otherPlayer.setPos(currentPos);
+					otherGroups[ident].player = otherPlayer;
 				}
 			}
 		}
