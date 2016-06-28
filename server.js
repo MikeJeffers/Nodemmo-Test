@@ -33,8 +33,7 @@ io.on('connection', function(socket) {
 	//register channels to listen on
 	socket.on('connect_ack', function(msg){
 		if("id" in msg){
-			var p1 = new Player(0, new Vec2D(0,0), new Vec2D(0,0));
-			p1.fromJSON(msg);
+			var p1 = new Player(msg.id, msg.pos, msg.toPos);
 			if(addToObjUnique(CLIENTS, p1.getID(), p1)){
 				console.log('client #%s connected', p1.getID());
 			}
@@ -44,8 +43,7 @@ io.on('connection', function(socket) {
 
 	socket.on('update_state', function(msg){
 		if("id" in msg){
-			var p1 = new Player(0, new Vec2D(0,0), new Vec2D(0,0));
-			p1.fromJSON(msg);
+			var p1 = new Player(msg.id, msg.pos, msg.toPos);
 			if(addToObjUnique(CLIENTS, p1.getID(), p1)){
 				console.log('client #%s connected', p1.getID());
 			}
@@ -56,11 +54,11 @@ io.on('connection', function(socket) {
 
 	socket.on('update_ack', function(msg){
 		if("id" in msg){
-			var p1 = new Player(0, new Vec2D(0,0), new Vec2D(0,0));
-			p1.fromJSON(msg);
+			var p1 = new Player(msg.id, msg.pos, msg.toPos);
 			if(addToObjUnique(CLIENTS, p1.getID(), p1)){
 				console.log('client #%s connected', p1.getID());
 			}
+			CLIENTS[p1.getID()] = p1;
 		}
 	});
 

@@ -1,28 +1,28 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-    <script src="/client/two.min.js"></script>
-    <script src="/client/url.js"></script>
-    <script src = "/Vec2D.js"></script>
-    <script src = "/Player.js"></script>
-    <link rel="stylesheet" type="text/css" href="/client/main.css"/>
+	<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+	<script src="/client/two.min.js"></script>
+	<script src="/client/url.js"></script>
+	<script src = "/Vec2D.js"></script>
+	<script src = "/Player.js"></script>
+	<link rel="stylesheet" type="text/css" href="/client/main.css"/>
 	<title>Client!</title>
 </head>
 <body>
-<div id="name"></div>
-<div id="view"></div>
+	<div id="name"></div>
+	<div id="view"></div>
 
-<script type="text/javascript">
-var type = /(canvas|webgl)/.test(url.type) ? url.type : 'svg';
-var elem = document.getElementById('view');
-var two = new Two({ width: elem.width, height: elem.height }).appendTo(elem);
+	<script type="text/javascript">
+		var type = /(canvas|webgl)/.test(url.type) ? url.type : 'svg';
+		var elem = document.getElementById('view');
+		var two = new Two({ width: elem.width, height: elem.height }).appendTo(elem);
 
-window.onresize=function(){
-	two.width = $("#view").width();
-	two.height = $("#view").height();
-};
+		window.onresize=function(){
+			two.width = $("#view").width();
+			two.height = $("#view").height();
+		};
 
 //TODO:bug client needs to give current state AND target state
 var numOfSteps = 500;
@@ -75,26 +75,30 @@ socket.on('server_update', function(msg){
 	}
 	
 	otherGroups = temp;
+	console.log(msg);
+	console.log(otherGroups);
 	for(var i in msg){
-		var otherPlayer = new Player(0, new Vec2D(0,0), new Vec2D(0,0));
-		otherPlayer.fromJSON(msg[i]);
-		if(i!=id && otherPlayer!=null){
-			if(!(i in otherGroups)){
-				//make new entry with id, new group, with circle at origin, then translate
-				otherGroups[i] = new Two.Group();
-				otherGroups[i].add(new Two.Ellipse(0,0,25));
-				otherGroups[i].player = otherPlayer;
-				var cPos = new Vec2D();
-				cPos.fromJSON(otherPlayer.getPos());
-				otherGroups[i].translation.set(cPos.x, cPos.y);
-				two.add(otherGroups[i]);
-			}else{
-				
-				var oPlayer = otherGroups[i].player;
-				otherGroups[i].translation.set(oPlayer.x, oPlayer.y);
+		if(i!=id){
+			var otherPlayer = new Player(msg[i].id, msg[i].pos, msg[i].toPos);
+			if(otherPlayer!=null && !(otherPlayer.isUndefined())){
+				if(!(i in otherGroups)){
+					//make new entry with id, new group, with circle at origin, then translate
+					otherGroups[i] = new Two.Group();
+					otherGroups[i].add(new Two.Ellipse(0,0,25));
+					otherGroups[i].player = otherPlayer;
+					var posData = otherPlayer.getPos();
+					var cPos = new Vec2D(posData.x, posData.y);
+					otherGroups[i].translation.set(cPos.x, cPos.y);
+					two.add(otherGroups[i]);
+				}else{
+					if(!otherPlayer.equals(otherGroups[i].player)){
+						otherGroups[i].player = otherPlayer;
+						otherGroups[i].translation.set(otherPlayer.pos.x, otherPlayer.pos.y);
+					}
+				}
+			}else if(i==id){
+				emit("update_ack", player);
 			}
-		}else if(i==id){
-			emit("update_ack", player);
 		}
 	}
 });
@@ -119,9 +123,10 @@ two.bind('update', function(framecount){
 
 	for(var ident in otherGroups){
 		var g = otherGroups[ident];
-		var otherPlayer = new Player(0,new Vec2D(0,0), new Vec2D(0,0));
-		otherPlayer.fromJSON(g.player);
-		if(g!=null && otherPlayer!=null){
+		var playData = g.player;
+		var otherPlayer = new Player(g.player.id, g.player.pos, g.player.toPos);
+
+		if(g!=null && otherPlayer!=null && !otherPlayer.isUndefined()){
 			var targetPos = new Vec2D(otherPlayer.getTarget().x, otherPlayer.getTarget().y);
 			var currentPos = new Vec2D(otherPlayer.getPos().x, otherPlayer.getPos().y);
 			if(targetPos!=null && currentPos!=null){
@@ -136,7 +141,6 @@ two.bind('update', function(framecount){
 			}
 		}
 	}
-
 });
 two.play();
 

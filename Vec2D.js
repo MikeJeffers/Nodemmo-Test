@@ -44,16 +44,6 @@
 			return false;
 		};
 
-		Vec2D.prototype.fromJSON = function(obj){
-			if(obj!=null){
-				for (var prop in obj){
-					if(this.hasOwnProperty(prop)){
-						this[prop] = obj[prop];
-					}
-				} 
-			}
-		}
-
 		return Vec2D;
 	})();
 

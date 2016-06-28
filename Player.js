@@ -34,15 +34,29 @@
 			this.pos = _pos;
 		};
 
-		Player.prototype.fromJSON = function(obj){
-			if(obj!=null){
-				for (var prop in obj){
-					if(this.hasOwnProperty(prop)){
-						this[prop] = obj[prop];
+		Player.prototype.isUndefined = function(){
+			if(this.id||this.id==0){
+				if(this.pos){
+					if(this.toPos){
+						return false;
 					}
-				} 
+				}
 			}
+			return true;
 		};
+
+		Player.prototype.equals = function(other){
+			if(other!=null && this!=null){
+				if(this.id==other.id){
+					if(this.pos.equals(other.pos)){
+						if(this.toPos.equals(other.toPos)){
+							return true;
+						}
+					}
+				}
+			}
+			return false;
+		}
 
 
 		return Player;
