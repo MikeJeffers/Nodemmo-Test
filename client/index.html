@@ -5,8 +5,8 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 	<script src="/client/two.min.js"></script>
 	<script src="/client/url.js"></script>
-	<script src = "/Vec2D.js"></script>
-	<script src = "/Player.js"></script>
+	<script src = "/bun.js"></script>
+	
 	<link rel="stylesheet" type="text/css" href="/client/main.css"/>
 	<title>Client!</title>
 </head>
@@ -15,14 +15,17 @@
 	<div id="view"></div>
 
 	<script type="text/javascript">
-		var type = /(canvas|webgl)/.test(url.type) ? url.type : 'svg';
-		var elem = document.getElementById('view');
-		var two = new Two({ width: elem.width, height: elem.height }).appendTo(elem);
+var Vec2D = require("/Vec2D.js");
+var Player = require("/Player.js");
+console.log(window.Player);
+var type = /(canvas|webgl)/.test(url.type) ? url.type : 'svg';
+var elem = document.getElementById('view');
+var two = new Two({ width: elem.width, height: elem.height }).appendTo(elem);
 
-		window.onresize=function(){
-			two.width = $("#view").width();
-			two.height = $("#view").height();
-		};
+window.onresize=function(){
+	two.width = $("#view").width();
+	two.height = $("#view").height();
+};
 
 //TODO:bug client needs to give current state AND target state
 var numOfSteps = 500;
@@ -79,7 +82,7 @@ socket.on('server_update', function(msg){
 	console.log(otherGroups);
 	for(var i in msg){
 		if(i!=id){
-			var otherPlayer = new Player(msg[i].id, msg[i].pos, msg[i].toPos);
+			var otherPlayer = new Player(msg[i].id, new Vec2D(msg[i].pos.x, msg[i].pos.y), new Vec2D(msg[i].toPos.x, msg[i].toPos.y));
 			if(otherPlayer!=null && !(otherPlayer.isUndefined())){
 				if(!(i in otherGroups)){
 					//make new entry with id, new group, with circle at origin, then translate
@@ -161,6 +164,7 @@ function shallowCopy(s){
 	}
 	return copyOBj;
 }
+
 
 
 </script>

@@ -1,6 +1,10 @@
 "use strict";
 
 (function(){
+	
+	var Vec2D = require("Vec2D.js");
+	
+	
 	var Player = (function(){
 		function Player(_id, _pos, _target){
 			this.id = _id;

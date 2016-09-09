@@ -6,9 +6,9 @@ var app = express();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 var port = process.argv[2] || 3000;
-var Vec2D = require("./Vec2D.js");
+var Vec2D = require("Vec2D.js");
 
-var Player = require("./Player.js");
+var Player = require("Player.js");
 
 var CLIENTS = {};
 var PLAYERS = [];
@@ -143,6 +143,18 @@ app.get('/Player.js', function(req, res) {
 	res.header("Access-Control-Allow-Origin", "*");
 	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
 	res.sendFile(__dirname + '/Player.js');
+});
+
+app.get('/bundle.js', function(req, res) {
+	res.header("Access-Control-Allow-Origin", "*");
+	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+	res.sendFile(__dirname + '/bundle.js');
+});
+
+app.get('/bun.js', function(req, res) {
+	res.header("Access-Control-Allow-Origin", "*");
+	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+	res.sendFile(__dirname + '/bun.js');
 });
 
 

@@ -1,15 +1,24 @@
 {
-  "name": "NodeMMO-test",
+  "name": "nodemmo-test",
   "version": "1.0.0",
-  "description": "",
+  "description": "testing multi-user interactions",
   "main": "server.js",
   "dependencies": {
     "express": "^4.13.4"
   },
   "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
   },
   "author": "Mike",
-  "license": "ISC"
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mikejeffers/nodemmo-test.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mikejeffers/nodemmo-test/issues"
+  },
+  "homepage": "https://github.com/mikejeffers/nodemmo-test#readme"
 }
